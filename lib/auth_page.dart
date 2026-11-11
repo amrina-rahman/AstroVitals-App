@@ -90,15 +90,23 @@ class _AuthPageState extends State<AuthPage> {
           weightKg: double.parse(_weightController.text.trim()),
           gender: _gender,
         );
-        await widget.accountRepository.register(
+        final registeredUser = await widget.accountRepository.register(
           user: user,
           password: _passwordController.text,
         );
         if (!mounted) return;
-        widget.onAuthenticated(user);
+        if (registeredUser == null) {
+          _showMessage(
+            'Check your email to confirm your account, then sign in.',
+          );
+          return;
+        }
+        widget.onAuthenticated(registeredUser);
       }
     } on AccountAlreadyExistsException catch (error) {
       if (mounted) _showMessage('${error.field} is already registered.');
+    } on AccountOperationException catch (error) {
+      if (mounted) _showMessage(error.message);
     } finally {
       if (mounted) setState(() => _isSubmitting = false);
     }
@@ -164,9 +172,8 @@ class _AuthPageState extends State<AuthPage> {
                     const SizedBox(height: 8),
                     Text(
                       subtitle,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: const Color(0xFF657370),
-                      ),
+                      style: Theme.of(context).textTheme.bodyLarge
+                          ?.copyWith(color: const Color(0xFF657370)),
                     ),
                     const SizedBox(height: 28),
                     _AuthModeSelector(
@@ -181,7 +188,9 @@ class _AuthPageState extends State<AuthPage> {
                         hint: 'Enter your astronaut ID',
                         controller: _astronautIdController,
                         textCapitalization: TextCapitalization.characters,
-                        validator: _requiredValidator('Enter your astronaut ID'),
+                        validator: _requiredValidator(
+                          'Enter your astronaut ID',
+                        ),
                       ),
                       const SizedBox(height: 16),
                       _AuthTextField(
@@ -245,8 +254,7 @@ class _AuthPageState extends State<AuthPage> {
                         controller: _confirmPasswordController,
                         obscureText: true,
                         textCapitalization: TextCapitalization.none,
-                        validator: (value) =>
-                            value != _passwordController.text
+                        validator: (value) => value != _passwordController.text
                             ? 'Passwords do not match'
                             : null,
                       ),
@@ -289,7 +297,10 @@ class _AuthPageState extends State<AuthPage> {
                           labelText: 'Gender (optional)',
                         ),
                         items: const [
-                          DropdownMenuItem(value: 'Female', child: Text('Female')),
+                          DropdownMenuItem(
+                            value: 'Female',
+                            child: Text('Female'),
+                          ),
                           DropdownMenuItem(value: 'Male', child: Text('Male')),
                           DropdownMenuItem(
                             value: 'Non-binary',
@@ -299,7 +310,10 @@ class _AuthPageState extends State<AuthPage> {
                             value: 'Prefer not to say',
                             child: Text('Prefer not to say'),
                           ),
-                          DropdownMenuItem(value: 'Other', child: Text('Other')),
+                          DropdownMenuItem(
+                            value: 'Other',
+                            child: Text('Other'),
+                          ),
                         ],
                         onChanged: (value) => setState(() => _gender = value),
                         onSaved: (value) => _gender = value,
@@ -430,10 +444,8 @@ class _BrandHeader extends StatelessWidget {
         const SizedBox(width: 12),
         Text(
           'AstroVitals',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w700,
-            letterSpacing: 0.2,
-          ),
+          style: Theme.of(context).textTheme.titleLarge
+              ?.copyWith(fontWeight: FontWeight.w700, letterSpacing: 0.2),
         ),
       ],
     );

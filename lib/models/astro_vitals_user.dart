@@ -16,4 +16,25 @@ class AstroVitalsUser {
   final double heightCm;
   final double weightKg;
   final String? gender;
+
+  AstroVitalsUser copyWith({
+    String? astronautId,
+    String? fullName,
+    String? email,
+    DateTime? dateOfBirth,
+    double? heightCm,
+    double? weightKg,
+    String? gender,
+    bool clearGender = false,
+  }) {
+    return AstroVitalsUser(
+      astronautId: astronautId ?? this.astronautId,
+      fullName: fullName ?? this.fullName,
+      email: email ?? this.email,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
+      heightCm: heightCm ?? this.heightCm,
+      weightKg: weightKg ?? this.weightKg,
+      gender: clearGender ? null : gender ?? this.gender,
+    );
+  }
 }
