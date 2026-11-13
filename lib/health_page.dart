@@ -351,6 +351,14 @@ class _HealthPageState extends State<HealthPage> {
                       status: latest[metric] == null
                           ? null
                           : _statusFor(latest[metric]!),
+                      statusLabel: latest[metric] == null
+                          ? null
+                          : metric == HealthMetric.bloodPressure
+                          ? widget.thresholds.bloodPressure.labelFor(
+                              latest[metric]!.value,
+                              latest[metric]!.secondaryValue!,
+                            )
+                          : _statusFor(latest[metric]!).label,
                     ),
                   ),
               ],
@@ -415,11 +423,13 @@ class _MeasurementCard extends StatelessWidget {
     required this.metric,
     required this.measurement,
     required this.status,
+    required this.statusLabel,
   });
 
   final HealthMetric metric;
   final HealthMeasurement? measurement;
   final HealthStatus? status;
+  final String? statusLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -488,7 +498,7 @@ class _MeasurementCard extends StatelessWidget {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  status!.label,
+                  statusLabel!,
                   key: ValueKey('health-status-${metric.databaseValue}'),
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: statusColor,

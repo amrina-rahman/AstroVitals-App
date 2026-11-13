@@ -188,67 +188,36 @@ void main() {
     expect(find.text('Source: Manual'), findsWidgets);
   });
 
-  testWidgets('registration fields validate required profile details', (
+  testWidgets('sign-in hides sign-up and accepts six-character passwords', (
     WidgetTester tester,
   ) async {
-    await tester.pumpWidget(
-      AstroVitalsApp(accountRepository: _FakeAccountRepository()),
+    final repository = _FakeAccountRepository();
+    final user = AstroVitalsUser(
+      astronautId: 'AV-1001',
+      fullName: 'Alex Morgan',
+      email: 'alex@example.com',
+      dateOfBirth: DateTime(1990, 1, 1),
+      heightCm: 172.5,
+      weightKg: 68.5,
     );
+    repository.addTestAccount(user: user, password: 'secret');
+    await tester.pumpWidget(AstroVitalsApp(accountRepository: repository));
 
-    await tester.tap(find.text('Sign up'));
-    await tester.pumpAndSettle();
-    await tester.ensureVisible(find.text('Create account'));
-    await tester.tap(find.text('Create account'));
-    await tester.pumpAndSettle();
-
-    expect(find.text('Enter your astronaut ID'), findsNWidgets(2));
-    expect(find.text('Enter your full name'), findsOneWidget);
-    expect(find.text('Select your date of birth'), findsOneWidget);
-    expect(find.text('Enter your height'), findsOneWidget);
-    expect(find.text('Enter your weight'), findsOneWidget);
-  });
-
-  testWidgets('registers, signs out, and signs back in during the session', (
-    WidgetTester tester,
-  ) async {
-    await tester.pumpWidget(
-      AstroVitalsApp(accountRepository: _FakeAccountRepository()),
-    );
-
-    await tester.tap(find.text('Sign up'));
-    await tester.pumpAndSettle();
-
-    await tester.enterText(
-      find.byKey(const ValueKey('astronaut-id')),
-      'AV-1001',
-    );
-    await tester.enterText(
-      find.byKey(const ValueKey('full-name')),
-      'Alex Morgan',
-    );
+    expect(find.text('Sign up'), findsNothing);
+    expect(find.text('Create your account'), findsNothing);
     await tester.enterText(
       find.byKey(const ValueKey('email')),
       'alex@example.com',
     );
-    await tester.enterText(find.byKey(const ValueKey('password')), 'secure123');
-    await tester.enterText(
-      find.byKey(const ValueKey('confirm-password')),
-      'secure123',
-    );
-    await tester.ensureVisible(find.text('Select date'));
-    await tester.tap(find.text('Select date'));
+    await tester.enterText(find.byKey(const ValueKey('password')), '12345');
+    await tester.tap(find.text('Sign in'));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('OK'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const ValueKey('height')), '172.5');
-    await tester.enterText(find.byKey(const ValueKey('weight')), '68.5');
+    expect(find.text('Use at least 6 characters'), findsOneWidget);
 
-    await tester.ensureVisible(find.text('Create account'));
-    await tester.tap(find.text('Create account'));
+    await tester.enterText(find.byKey(const ValueKey('password')), 'secret');
+    await tester.tap(find.text('Sign in'));
     await tester.pumpAndSettle();
-
     expect(find.text('Welcome, Alex Morgan'), findsOneWidget);
-    expect(find.text('Astronaut ID: AV-1001'), findsOneWidget);
 
     await tester.tap(find.text('Sign out'));
     await tester.pumpAndSettle();
@@ -256,10 +225,9 @@ void main() {
       find.byKey(const ValueKey('email')),
       'alex@example.com',
     );
-    await tester.enterText(find.byKey(const ValueKey('password')), 'secure123');
+    await tester.enterText(find.byKey(const ValueKey('password')), 'secret');
     await tester.tap(find.text('Sign in'));
     await tester.pumpAndSettle();
-
     expect(find.text('Welcome, Alex Morgan'), findsOneWidget);
   });
 
@@ -282,39 +250,19 @@ void main() {
   testWidgets('edits, cancels, saves, and signs back in with profile changes', (
     WidgetTester tester,
   ) async {
+    final repository = _FakeAccountRepository();
+    final user = AstroVitalsUser(
+      astronautId: 'AV-2002',
+      fullName: 'Jordan Lee',
+      email: 'jordan@example.com',
+      dateOfBirth: DateTime(1990, 1, 1),
+      heightCm: 180,
+      weightKg: 75,
+    );
+    repository.addTestAccount(user: user, password: 'secure123');
     await tester.pumpWidget(
-      AstroVitalsApp(accountRepository: _FakeAccountRepository()),
+      AstroVitalsApp(accountRepository: repository, initialUser: user),
     );
-
-    await tester.tap(find.text('Sign up'));
-    await tester.pumpAndSettle();
-    await tester.enterText(
-      find.byKey(const ValueKey('astronaut-id')),
-      'AV-2002',
-    );
-    await tester.enterText(
-      find.byKey(const ValueKey('full-name')),
-      'Jordan Lee',
-    );
-    await tester.enterText(
-      find.byKey(const ValueKey('email')),
-      'jordan@example.com',
-    );
-    await tester.enterText(find.byKey(const ValueKey('password')), 'secure123');
-    await tester.enterText(
-      find.byKey(const ValueKey('confirm-password')),
-      'secure123',
-    );
-    await tester.ensureVisible(find.text('Select date'));
-    await tester.tap(find.text('Select date'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('OK'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const ValueKey('height')), '180');
-    await tester.enterText(find.byKey(const ValueKey('weight')), '75');
-    await tester.ensureVisible(find.text('Create account'));
-    await tester.tap(find.text('Create account'));
-    await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const ValueKey('navigation-Profile')));
     await tester.pumpAndSettle();
@@ -383,39 +331,20 @@ void main() {
   testWidgets('profile editor validates required and invalid values', (
     WidgetTester tester,
   ) async {
+    final user = AstroVitalsUser(
+      astronautId: 'AV-3003',
+      fullName: 'Taylor Kim',
+      email: 'taylor@example.com',
+      dateOfBirth: DateTime(1990, 1, 1),
+      heightCm: 170,
+      weightKg: 65,
+    );
     await tester.pumpWidget(
-      AstroVitalsApp(accountRepository: _FakeAccountRepository()),
+      AstroVitalsApp(
+        accountRepository: _FakeAccountRepository(),
+        initialUser: user,
+      ),
     );
-
-    await tester.tap(find.text('Sign up'));
-    await tester.pumpAndSettle();
-    await tester.enterText(
-      find.byKey(const ValueKey('astronaut-id')),
-      'AV-3003',
-    );
-    await tester.enterText(
-      find.byKey(const ValueKey('full-name')),
-      'Taylor Kim',
-    );
-    await tester.enterText(
-      find.byKey(const ValueKey('email')),
-      'taylor@example.com',
-    );
-    await tester.enterText(find.byKey(const ValueKey('password')), 'secure123');
-    await tester.enterText(
-      find.byKey(const ValueKey('confirm-password')),
-      'secure123',
-    );
-    await tester.ensureVisible(find.text('Select date'));
-    await tester.tap(find.text('Select date'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('OK'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const ValueKey('height')), '170');
-    await tester.enterText(find.byKey(const ValueKey('weight')), '65');
-    await tester.ensureVisible(find.text('Create account'));
-    await tester.tap(find.text('Create account'));
-    await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const ValueKey('navigation-Profile')));
     await tester.pumpAndSettle();
@@ -439,6 +368,15 @@ void main() {
 class _FakeAccountRepository implements AccountRepository {
   final Map<String, AstroVitalsUser> _usersByEmail = {};
   final Map<String, String> _passwordsByEmail = {};
+
+  void addTestAccount({
+    required AstroVitalsUser user,
+    required String password,
+  }) {
+    final email = user.email.toLowerCase();
+    _usersByEmail[email] = user;
+    _passwordsByEmail[email] = password;
+  }
 
   @override
   Future<AstroVitalsUser?> currentUser() async => null;

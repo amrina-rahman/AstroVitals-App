@@ -67,6 +67,14 @@ create policy "Users can create their own health records"
   to authenticated
   with check ((select auth.uid()) = user_id);
 
+do $$
+begin
+  alter publication supabase_realtime add table public.health_records;
+exception
+  when duplicate_object then null;
+end
+$$;
+
 create table if not exists public.daily_activity (
   activity_id uuid primary key default gen_random_uuid(),
   user_id uuid not null references public.users (user_id) on delete cascade,
@@ -120,6 +128,14 @@ create policy "Users can update their own daily activity"
   using ((select auth.uid()) = user_id)
   with check ((select auth.uid()) = user_id);
 
+do $$
+begin
+  alter publication supabase_realtime add table public.daily_activity;
+exception
+  when duplicate_object then null;
+end
+$$;
+
 grant select, insert on public.health_records to authenticated;
 grant select, insert, update on public.daily_activity to authenticated;
-grant update on public.users to authenticated;
+grant select, insert, update on public.users to authenticated;

@@ -27,6 +27,15 @@ associated with the signed-in Supabase user. Manual and simulated records use
 different source values. Simulated smartwatch records use a fixed demo sample,
 not a connected wearable.
 
+The schema adds `health_records` and `daily_activity` to Supabase's
+`supabase_realtime` publication so connected clients can receive row changes.
+The mission-control dashboard must also subscribe to `INSERT` events on
+`health_records` (and `daily_activity` for activity updates), then refresh or
+update its view from the event payload. Health rows include `user_id`,
+`metric_type`, JSONB `value`, `unit`, `source_type`, and `recorded_at`. Filter
+the dashboard to the appropriate astronaut/user and apply its own access
+controls; do not expose the service-role key in the Flutter app or browser.
+
 Health status ranges are configurable in
 `lib/data/health_reference_thresholds.dart`. The included prototype values are
 not validated for astronaut-specific medical use and must not be used as a

@@ -56,6 +56,31 @@ class BloodPressureReferenceThreshold {
     }
     return HealthStatus.normal;
   }
+
+  String labelFor(double systolicValue, double diastolicValue) {
+    final lowSystolicBoundary =
+        systolic.criticalMinimum ?? systolic.normalMinimum;
+    final lowDiastolicBoundary =
+        diastolic.criticalMinimum ?? diastolic.normalMinimum;
+    if ((lowSystolicBoundary != null && systolicValue < lowSystolicBoundary) ||
+        (lowDiastolicBoundary != null &&
+            diastolicValue < lowDiastolicBoundary)) {
+      return 'Low blood pressure';
+    }
+
+    final highSystolicBoundary =
+        systolic.normalMaximum ?? systolic.criticalMaximum;
+    final highDiastolicBoundary =
+        diastolic.normalMaximum ?? diastolic.criticalMaximum;
+    if ((highSystolicBoundary != null &&
+            systolicValue > highSystolicBoundary) ||
+        (highDiastolicBoundary != null &&
+            diastolicValue > highDiastolicBoundary)) {
+      return 'High blood pressure';
+    }
+
+    return 'Normal';
+  }
 }
 
 class HealthReferenceThresholds {
@@ -96,10 +121,12 @@ class HealthReferenceThresholds {
     bloodPressure: BloodPressureReferenceThreshold(
       systolic: MetricReferenceThreshold(
         normalMaximum: 120,
+        criticalMinimum: 90,
         criticalMaximum: 180,
       ),
       diastolic: MetricReferenceThreshold(
         normalMaximum: 80,
+        criticalMinimum: 60,
         criticalMaximum: 120,
       ),
     ),
